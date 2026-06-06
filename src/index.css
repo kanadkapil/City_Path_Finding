@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base Reset */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background-color: #111827; /* base-100 */
+  color: #f3f4f6;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #111827;
+}
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+/* Ensure Leaflet container fits container and uses correct box-sizing */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background-color: #111827 !important;
+  box-sizing: content-box !important;
+}
+
+.leaflet-container * {
+  box-sizing: content-box !important;
+}
+
+/* Fix Tailwind conflicts with Leaflet map markers, tiles, and SVGs */
+.leaflet-container img {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.leaflet-container svg {
+  display: block !important;
+}
+
+.leaflet-pane svg {
+  max-width: none !important;
+  max-height: none !important;
+  background: none !important;
+}
+
+/* Customize Leaflet Controls for Dark Theme */
+.leaflet-bar {
+  border: 1px solid #374151 !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3) !important;
+  border-radius: 0.5rem !important;
+  overflow: hidden;
+}
+
+.leaflet-bar a {
+  background-color: #1f2937 !important;
+  color: #f3f4f6 !important;
+  border: none !important;
+  border-bottom: 1px solid #374151 !important;
+  transition: all 0.2s ease;
+}
+
+.leaflet-bar a:last-child {
+  border-bottom: none !important;
+}
+
+.leaflet-bar a:hover {
+  background-color: #374151 !important;
+  color: #10b981 !important;
+}
+
+.leaflet-control-attribution {
+  background-color: rgba(17, 24, 39, 0.8) !important;
+  color: #9ca3af !important;
+  font-size: 0.75rem !important;
+  backdrop-filter: blur(4px);
+}
+
+.leaflet-control-attribution a {
+  color: #3b82f6 !important;
+}
+
+/* Custom CSS transitions for pathfinding nodes */
+.node-transition {
+  transition: fill 0.3s ease, r 0.2s ease, stroke-width 0.2s ease;
+}
