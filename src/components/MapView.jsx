@@ -1,18 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 
-// Helper component to update map view coordinates dynamically when city changes
-function ChangeView({ center, zoom }) {
+function MapUpdater({ center }) {
   const map = useMap();
   useEffect(() => {
-    map.setView(center, zoom);
-  }, [center, zoom, map]);
+    map.setView(center, 14);
+  }, [center, map]);
   return null;
 }
 
-/**
- * Interactive MapView component for pathfinding visualization on spatial graphs.
- */
 export default function MapView({
   nodes,
   edges,
@@ -28,251 +25,150 @@ export default function MapView({
   onNodeSelect,
   onEdgeToggle
 }) {
-  const mapZoom = 14;
+  
+  // Memoize static map geometries
+  const { nodeMap, staticEdges } = useMemo(() => {
+    const nodeMap = new Map();
+    nodes.forEach(n => nodeMap.set(n.id, n));
 
-  // Build a lookup map of nodes for edge coordinates
-  const nodeMap = {};
-  nodes.forEach(node => {
-    nodeMap[node.id] = node;
-  });
+    const staticEdges = edges.map(edge => {
+      const sourceNode = nodeMap.get(edge.source);
+      const targetNode = nodeMap.get(edge.target);
+      return {
+        ...edge,
+        sourceCoords: [sourceNode.lat, sourceNode.lng],
+        targetCoords: [targetNode.lat, targetNode.lng],
+        id: `${edge.source}-${edge.target}`
+      };
+    });
 
-  // Check if a node is in the final shortest path
-  const finalPathSet = new Set(finalPath);
+    return { nodeMap, staticEdges };
+  }, [nodes, edges]);
 
-  // Helper to determine node colors and styles based on state
-  const getNodeStyle = (nodeId) => {
-    const isStart = startNode === nodeId;
-    const isDest = destinationNode === nodeId;
-    const isPath = finalPathSet.has(nodeId);
-    const state = exploredStates[nodeId];
-
-    if (isStart) {
-      return {
-        fillColor: '#06b6d4', // cyan-500
-        color: '#ffffff',
-        radius: 10,
-        weight: 2.5,
-        fillOpacity: 1
-      };
-    }
-    if (isDest) {
-      return {
-        fillColor: '#ec4899', // pink-500
-        color: '#ffffff',
-        radius: 10,
-        weight: 2.5,
-        fillOpacity: 1
-      };
-    }
-    if (isPath) {
-      return {
-        fillColor: '#f59e0b', // amber-500
-        color: '#ffffff',
-        radius: 8,
-        weight: 2,
-        fillOpacity: 0.9
-      };
-    }
-    if (state === 'visited') {
-      return {
-        fillColor: '#8b5cf6', // purple-500
-        color: '#6d28d9', // purple-700
-        radius: 7,
-        weight: 1.5,
-        fillOpacity: 0.8
-      };
-    }
-    if (state === 'exploring') {
-      return {
-        fillColor: '#3b82f6', // blue-500
-        color: '#1d4ed8', // blue-700
-        radius: 7,
-        weight: 1.5,
-        fillOpacity: 0.8
-      };
-    }
-    // Default unvisited node
-    return {
-      fillColor: '#4b5563', // gray-600
-      color: '#1f2937', // gray-800
-      radius: 6,
-      weight: 1.5,
-      fillOpacity: 0.6
-    };
+  // Color mappings based on new tailwind configuration
+  const getNodeColor = (nodeId) => {
+    if (nodeId === startNode) return '#22D3EE'; // start-node (Cyan)
+    if (nodeId === destinationNode) return '#F472B6'; // end-node (Pink)
+    if (finalPath.includes(nodeId)) return '#FBBF24'; // shortest-path (Amber)
+    if (exploredStates[nodeId] === 'visited') return '#8B5CF6'; // visited (Purple)
+    if (exploredStates[nodeId] === 'exploring') return '#60A5FA'; // frontier (Blue)
+    return '#64748b'; // slate-500 for better visibility
   };
 
-  // Helper to determine edge colors and styles based on states
-  const getEdgeStyle = (sourceId, targetId) => {
-    const edgeKey1 = `${sourceId}-${targetId}`;
-    const edgeKey2 = `${targetId}-${sourceId}`;
+  const getNodeRadius = (nodeId) => {
+    if (nodeId === startNode || nodeId === destinationNode) return 10;
+    if (finalPath.includes(nodeId)) return 8;
+    return 5;
+  };
 
-    const isBlocked = blockedEdges.has(edgeKey1) || blockedEdges.has(edgeKey2);
+  const getEdgeStyle = (edgeId) => {
+    const isBlocked = blockedEdges.has(edgeId);
+    const isTraffic = trafficEdges.has(edgeId);
+    const isExplored = exploredEdges.has(edgeId);
+
+    // Default static edge
+    let color = 'rgba(255,255,255,0.25)'; // Brighter so it's visible against the dark map
+    let weight = 2.5;
+    let dashArray = null;
+
     if (isBlocked) {
-      return {
-        color: '#ef4444', // red
-        weight: 2.5,
-        dashArray: '5, 8',
-        opacity: 0.7
-      };
+      color = '#ffb4ab'; // error
+      dashArray = '5, 10';
+      weight = 3;
+    } else if (isTraffic) {
+      color = '#FBBF24'; // warning (orange)
+      weight = 4;
+    } else if (isExplored) {
+      color = '#8B5CF6'; // visited (Purple)
+      weight = 3;
     }
 
-    const hasTraffic = trafficEdges.has(edgeKey1) || trafficEdges.has(edgeKey2);
-    
-    // Check if edge is in the final shortest path
-    let isPathEdge = false;
-    for (let i = 0; i < finalPath.length - 1; i++) {
-      const u = finalPath[i];
-      const v = finalPath[i + 1];
-      if ((u === sourceId && v === targetId) || (u === targetId && v === sourceId)) {
-        isPathEdge = true;
-        break;
-      }
-    }
-
-    if (isPathEdge) {
-      return {
-        color: '#f59e0b', // amber-500
-        weight: 5,
-        dashArray: null,
-        opacity: 0.9
-      };
-    }
-
-    // Check if edge was explored during algorithm search
-    const isExplored = exploredEdges.has(edgeKey1) || exploredEdges.has(edgeKey2);
-    if (isExplored) {
-      return {
-        color: '#8b5cf6', // purple-500
-        weight: 3,
-        dashArray: null,
-        opacity: 0.8
-      };
-    }
-
-    if (hasTraffic) {
-      return {
-        color: '#f59e0b', // amber traffic
-        weight: 3.5,
-        dashArray: null,
-        opacity: 0.85
-      };
-    }
-
-    // Default street segment
-    return {
-      color: '#4b5563', // gray-600
-      weight: 2,
-      dashArray: null,
-      opacity: 0.45
-    };
-  };
-
-  const handleNodeClick = (nodeId) => {
-    if (interactionMode === 'nodes') {
-      onNodeSelect(nodeId);
-    }
-  };
-
-  const handleEdgeClick = (sourceId, targetId) => {
-    if (interactionMode === 'blocked' || interactionMode === 'traffic') {
-      onEdgeToggle(sourceId, targetId, interactionMode);
-    }
+    return { color, weight, dashArray };
   };
 
   return (
-    <div className="relative w-full h-[500px] rounded-xl overflow-hidden border border-gray-800 shadow-2xl">
-      {/* Interactive Helper Overlay for Map Tool */}
-      <div className="absolute top-3 right-3 z-[1000] bg-neutral/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 border border-gray-800 pointer-events-none shadow-md">
-        Mode: {interactionMode === 'nodes' ? (
-          <span className="text-primary font-bold">📍 Node Selector</span>
-        ) : interactionMode === 'blocked' ? (
-          <span className="text-error font-bold">🚧 Toggle Roadblock</span>
-        ) : (
-          <span className="text-warning font-bold">🚗 Toggle Congestion</span>
-        )}
-      </div>
-
-      <MapContainer
-        center={center}
-        zoom={mapZoom}
-        scrollWheelZoom={true}
-        className="w-full h-full"
+    <div className="absolute inset-0 w-full h-full">
+      <MapContainer 
+        center={center} 
+        zoom={14} 
+        zoomControl={false}
+        style={{ height: '100%', width: '100%' }}
+        className="bg-surface"
       >
-        <ChangeView center={center} zoom={mapZoom} />
-
-        {/* Premium Dark Map Tiles */}
+        <MapUpdater center={center} />
+        
+        {/* Dark Mode Map Tiles */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 
-        {/* Render Graph Edges (Polylines) */}
-        {edges.map((edge, index) => {
-          const u = nodeMap[edge.source];
-          const v = nodeMap[edge.target];
-          if (!u || !v) return null;
-
-          const style = getEdgeStyle(edge.source, edge.target);
-
+        {/* Render Edges */}
+        {staticEdges.map(edge => {
+          const style = getEdgeStyle(edge.id);
+          const isExplored = exploredEdges.has(edge.id);
+          
           return (
             <Polyline
-              key={`edge-${edge.source}-${edge.target}-${index}`}
-              positions={[
-                [u.lat, u.lng],
-                [v.lat, v.lng]
-              ]}
-              eventHandlers={{
-                click: () => handleEdgeClick(edge.source, edge.target)
-              }}
+              key={edge.id}
+              positions={[edge.sourceCoords, edge.targetCoords]}
               pathOptions={{
                 color: style.color,
                 weight: style.weight,
                 dashArray: style.dashArray,
-                opacity: style.opacity,
-                interactive: interactionMode !== 'nodes',
-                bubblingMouseEvents: false
+                opacity: isExplored ? 0.9 : 0.6
               }}
-            >
-              <Tooltip sticky>
-                <div className="text-xs">
-                  <span>Street between: <b>{u.label}</b> & <b>{v.label}</b></span>
-                  {trafficEdges.has(`${edge.source}-${edge.target}`) || trafficEdges.has(`${edge.target}-${edge.source}`) ? (
-                    <span className="text-amber-500 font-bold block">⚠️ Heavy Traffic</span>
-                  ) : null}
-                  {blockedEdges.has(`${edge.source}-${edge.target}`) || blockedEdges.has(`${edge.target}-${edge.source}`) ? (
-                    <span className="text-red-500 font-bold block">🚫 Blocked Road</span>
-                  ) : null}
-                </div>
-              </Tooltip>
-            </Polyline>
+              eventHandlers={{
+                click: () => {
+                  if (interactionMode === 'blocked' || interactionMode === 'traffic') {
+                    onEdgeToggle(edge.source, edge.target, interactionMode);
+                  }
+                }
+              }}
+              className={interactionMode !== 'nodes' ? 'cursor-pointer hover:stroke-white transition-colors' : ''}
+            />
           );
         })}
 
-        {/* Render Graph Nodes (Circle Markers) */}
-        {nodes.map((node) => {
-          const style = getNodeStyle(node.id);
+        {/* Render Shortest Path Line on Top */}
+        {finalPath.length > 0 && (
+          <Polyline
+            positions={finalPath.map(id => [nodeMap.get(id).lat, nodeMap.get(id).lng])}
+            pathOptions={{ color: '#FBBF24', weight: 5, className: 'animate-[dash_20s_linear_infinite]' }} // shortest-path
+          />
+        )}
 
+        {/* Render Nodes */}
+        {nodes.map(node => {
+          const color = getNodeColor(node.id);
+          const radius = getNodeRadius(node.id);
+          const isStartOrEnd = node.id === startNode || node.id === destinationNode;
+          
           return (
             <CircleMarker
-              key={`node-${node.id}`}
+              key={node.id}
               center={[node.lat, node.lng]}
-              radius={style.radius}
-              className="node-transition"
-              pathOptions={{
-                fillColor: style.fillColor,
-                color: style.color,
-                weight: style.weight,
-                fillOpacity: style.fillOpacity
+              radius={radius}
+              pathOptions={{ 
+                fillColor: color, 
+                fillOpacity: 1, 
+                color: isStartOrEnd ? '#ffffff' : color, 
+                weight: isStartOrEnd ? 2 : 0,
+                className: isStartOrEnd ? 'node-transition node-pulse' : 'node-transition'
               }}
               eventHandlers={{
-                click: () => handleNodeClick(node.id)
+                click: () => {
+                  if (interactionMode === 'nodes') {
+                    onNodeSelect(node.id);
+                  }
+                }
               }}
             >
-              <Tooltip direction="top" offset={[0, -10]} opacity={0.9} sticky>
-                <div className="text-xs font-semibold">
-                  <span className="text-primary">{node.id}:</span> {node.label}
-                  {startNode === node.id && <span className="text-cyan-400 block font-bold mt-0.5">📍 Start Point</span>}
-                  {destinationNode === node.id && <span className="text-pink-400 block font-bold mt-0.5">📍 Destination Point</span>}
+              <Tooltip direction="top" offset={[0, -10]} opacity={1} className="bg-surface-container text-on-surface border-outline-variant font-code-label">
+                <div className="flex flex-col">
+                  <span className="font-bold text-secondary">{node.label}</span>
+                  {node.id === startNode && <span className="text-[10px] text-start-node">START</span>}
+                  {node.id === destinationNode && <span className="text-[10px] text-end-node">DESTINATION</span>}
                 </div>
               </Tooltip>
             </CircleMarker>

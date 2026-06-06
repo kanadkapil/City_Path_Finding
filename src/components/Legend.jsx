@@ -1,36 +1,43 @@
 import React from 'react';
 
-/**
- * Legend component that provides a visual key for all states and elements
- * displayed on the map visualizer.
- */
 export default function Legend() {
-  const legendItems = [
-    { label: 'Start Node', type: 'node', color: 'bg-success border-success' },
-    { label: 'Destination Node', type: 'node', color: 'bg-error border-error' },
-    { label: 'Exploring Frontier', type: 'node', color: 'bg-warning border-warning' },
-    { label: 'Visited Node', type: 'node', color: 'bg-info border-info' },
-    { label: 'Shortest Path', type: 'edge', color: 'bg-secondary', styleClass: 'h-1.5 w-8 rounded-full' },
-    { label: 'Heavy Traffic (x2.5)', type: 'edge', color: 'bg-yellow-500', styleClass: 'h-1 w-8 border-b-2 border-yellow-500' },
-    { label: 'Blocked Road', type: 'edge', color: 'bg-transparent', styleClass: 'w-8 border-b-2 border-dashed border-red-500' }
-  ];
-
   return (
-    <div className="card bg-neutral text-neutral-content shadow-lg border border-gray-800 p-4 w-full">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h4 className="text-sm font-bold tracking-wider uppercase text-primary">Legend</h4>
-        <div className="flex flex-wrap gap-x-6 gap-y-3 text-xs">
-          {legendItems.map((item, index) => (
-            <div key={index} className="flex items-center gap-2">
-              {item.type === 'node' ? (
-                <div className={`w-3.5 h-3.5 rounded-full border border-white/20 shadow-md ${item.color.split(' ')[0]}`} />
-              ) : (
-                <div className={`${item.styleClass} opacity-80`} />
-              )}
-              <span className="font-medium text-gray-300">{item.label}</span>
-            </div>
-          ))}
-        </div>
+    <div className="hidden md:flex absolute bottom-edge-margin left-edge-margin backdrop-blur-xl bg-surface-glass border border-outline-variant p-stack-md rounded-xl shadow-lg w-48 flex-col gap-2">
+      <h3 className="text-code-label text-text-muted mb-3 uppercase tracking-wider">Map Legend</h3>
+      
+      <div className="flex items-center gap-3">
+        <div className="w-3 h-3 rounded-full bg-start-node"></div>
+        <span className="text-code-label">Start Point</span>
+      </div>
+      
+      <div className="flex items-center gap-3">
+        <div className="w-3 h-3 rounded-full bg-end-node"></div>
+        <span className="text-code-label">Destination</span>
+      </div>
+      
+      <div className="flex items-center gap-3">
+        <div className="w-3 h-3 rounded-full bg-shortest-path"></div>
+        <span className="text-code-label">Optimized Path</span>
+      </div>
+      
+      <div className="flex items-center gap-3">
+        <div className="w-3 h-3 rounded-full bg-visited"></div>
+        <span className="text-code-label">Visited Node</span>
+      </div>
+      
+      <div className="flex items-center gap-3">
+        <div className="w-3 h-3 rounded-full bg-frontier"></div>
+        <span className="text-code-label">Current Frontier</span>
+      </div>
+      
+      <div className="flex items-center gap-3 mt-2 pt-2 border-t border-outline-variant">
+        <div className="w-3 h-1 bg-error"></div>
+        <span className="text-code-label">Roadblock</span>
+      </div>
+      
+      <div className="flex items-center gap-3">
+        <div className="w-3 h-1 bg-shortest-path opacity-80"></div>
+        <span className="text-code-label">Heavy Traffic</span>
       </div>
     </div>
   );

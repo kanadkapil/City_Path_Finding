@@ -1,33 +1,98 @@
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
-  },
-  plugins: [require("daisyui")],
-  daisyui: {
-    themes: [
-      {
-        dark: {
-          ...require("daisyui/src/theming/themes")["dark"],
-          primary: "#10b981", // Emerald
-          secondary: "#3b82f6", // Blue
-          accent: "#a855f7", // Purple
-          neutral: "#1f2937",
-          "base-100": "#111827", // Dark Gray
-          info: "#06b6d4",
-          success: "#10b981",
-          warning: "#f59e0b",
-          error: "#ef4444",
-        },
+    extend: {
+      colors: {
+        "shortest-path": "#FBBF24",
+        "visited": "#8B5CF6",
+        "on-tertiary-fixed-variant": "#574425",
+        "surface-container-highest": "#323537",
+        "on-primary": "#283044",
+        "surface": "#101415",
+        "secondary-fixed": "#d8e2ff",
+        "on-surface": "#e0e3e5",
+        "primary-fixed": "#dae2fd",
+        "inverse-on-surface": "#2d3133",
+        "background": "#101415",
+        "secondary-container": "#0566d9",
+        "surface-variant": "#323537",
+        "on-secondary-fixed": "#001a42",
+        "surface-tint": "#bec6e0",
+        "on-secondary": "#002e6a",
+        "tertiary-fixed-dim": "#dec29a",
+        "on-primary-fixed": "#131b2e",
+        "on-primary-container": "#798098",
+        "on-secondary-fixed-variant": "#004395",
+        "primary": "#bec6e0",
+        "inverse-primary": "#565e74",
+        "secondary-fixed-dim": "#adc6ff",
+        "primary-container": "#0f172a",
+        "text-muted": "#94A3B8",
+        "start-node": "#22D3EE",
+        "outline-variant": "#45464d",
+        "on-background": "#e0e3e5",
+        "on-tertiary-container": "#957d5a",
+        "on-primary-fixed-variant": "#3f465c",
+        "tertiary-container": "#231500",
+        "on-error-container": "#ffdad6",
+        "surface-container-lowest": "#0b0f10",
+        "on-tertiary": "#3e2d11",
+        "primary-fixed-dim": "#bec6e0",
+        "surface-container-low": "#191c1e",
+        "frontier": "#60A5FA",
+        "surface-container": "#1d2022",
+        "surface-bright": "#363a3b",
+        "on-secondary-container": "#e6ecff",
+        "surface-container-high": "#272a2c",
+        "on-error": "#690005",
+        "surface-dim": "#101415",
+        "inverse-surface": "#e0e3e5",
+        "tertiary-fixed": "#fcdeb5",
+        "end-node": "#F472B6",
+        "on-tertiary-fixed": "#271901",
+        "secondary": "#adc6ff",
+        "surface-glass": "rgba(30, 41, 59, 0.7)",
+        "on-surface-variant": "#c6c6cd",
+        "tertiary": "#dec29a",
+        "error": "#ffb4ab",
+        "outline": "#909097",
+        "error-container": "#93000a"
       },
-      "light",
-    ],
+      borderRadius: {
+        "DEFAULT": "0.125rem",
+        "lg": "0.25rem",
+        "xl": "0.5rem",
+        "full": "0.75rem"
+      },
+      spacing: {
+        "panel-width": "320px",
+        "edge-margin": "24px",
+        "gutter": "16px",
+        "stack-sm": "8px",
+        "stack-md": "16px"
+      },
+      fontFamily: {
+        "display-lg": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "stat-value": ["JetBrains Mono", "monospace"],
+        "code-label": ["JetBrains Mono", "monospace"],
+        "body-base": ["Inter", "sans-serif"]
+      },
+      fontSize: {
+        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+        "stat-value": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+        "code-label": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+        "body-base": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+      }
+    },
   },
+  plugins: [],
 }
